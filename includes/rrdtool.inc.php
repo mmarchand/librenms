@@ -197,11 +197,14 @@ function rrdtool_build_command($command, $filename, $options)
     // no remote for create < 1.5.5 and tune < 1.5
     if ($config['rrdcached'] &&
         !($command == 'create' && version_compare($config['rrdtool_version'], '1.5.5', '<')) &&
-        !($command == 'tune' && $config['rrdcached'] && version_compare($config['rrdtool_version'], '1.5', '<'))
+        !($command == 'tune' && version_compare($config['rrdtool_version'], '1.5', '<'))
     ) {
-        // only relative paths if using rrdcached
-        $filename = str_replace(array($config['rrd_dir'].'/', $config['rrd_dir']), '', $filename);
-        $options = str_replace(array($config['rrd_dir'].'/', $config['rrd_dir']), '', $options);
+        // only relative paths if using rrdcached, except for "tune" which does not actually work remotely !
+        // tune behavior is to : flush the remote cache on the rrdcached server, then modify the local file, so it needs the full path
+        if ( $command != 'tune' ) {
+            $filename = str_replace(array($config['rrd_dir'].'/', $config['rrd_dir']), '', $filename);
+            $options = str_replace(array($config['rrd_dir'].'/', $config['rrd_dir']), '', $options);
+        }
 
         return "$command $filename $options --daemon " . $config['rrdcached'];
     }
